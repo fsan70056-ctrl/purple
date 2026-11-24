@@ -21,6 +21,7 @@
 
 ## Git / 远程
 - origin = 原作者仓库 ferdousbhai/purple（**禁止推送**）；fork = fsan70056-ctrl/purple（你的 Fork，已确认存在，master=acc680a）。
+- 2026-11-24 已推送 dev/music-studio-v1 到 fork（fork 的 master 仍为 acc680a，未改动；origin 未推送）。PR 链接未创建。
 - 只推送 dev/music-studio-v1 到 fork；不改 main/master。命令：`git push fork dev/music-studio-v1`
 - 三个提交已审查：仅文本源码，无二进制/音频/采样文件，无密钥或 token；起始曲目为纯合成器。
 - 锁文件根因：沙箱挂载默认禁止删除文件，git 提交时无法删除自己的 .lock/tmp_obj，导致残留。解决：用 device_request_delete_permission 经用户批准开启删除权限（已完成），**不要**用 mv 改名作常规办法。在 Windows 本机直接用 git 不受影响。
