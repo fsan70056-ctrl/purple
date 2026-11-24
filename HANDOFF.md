@@ -51,3 +51,33 @@
 1. 用户验收创作模式：戴耳机试听各曲风，调整节奏/音量平衡。
 2. 补全剩余界面中文化（小改动）。
 3. 经用户许可后再推送到 fsan70056-ctrl/purple；不商业化，授权不明音源不得进公开版本（Strudel AGPL-3.0+，Purple MIT）。
+
+## 虚拟歌手技术验证（voice-lab，独立于工作室代码）
+
+位置：`../../voice-lab/`（不在本仓库内，未提交；模型与大文件不得入库）。未改动任何音乐工作室核心代码。
+
+### 环境
+- CPU：AMD Ryzen 7 7730U（8 核 16 线程）；GPU：集成 Radeon（约 512MB 专用显存）→ 无 CUDA，全程 CPU 推理；内存 15.3GB（采样时空闲约 3.4GB）；Windows 11；C 盘剩余 37.7GB。
+- 方案：OpenUtau 0.1.576 便携版（MIT）+ DiffSinger 渲染器（ONNX，CPU）+ 声库 绮萱 Qixuan v2.7.0 + 社区声码器 PC-NSF-HiFiGAN 2025.02。
+
+### 授权结论（个人研究可用）
+- 绮萱：允许个人/商业使用其输出；公开发布须标明「AI 合成」并署名「绮萱」「DiffSinger」；不得修改/转换/蒸馏模型权重；不得用输出训练声音模型；立绘版权属不伊子；再分发须完整、未修改、免费。
+- 声码器 PC-NSF-HiFiGAN：CC BY-NC-SA 4.0（非商业，需署名并相同方式共享）。
+- 因此：模型文件不得纳入 Purple 仓库或公开构建；仅本机使用。
+
+### 步骤与结果
+1. 用 `download-assets.bat` 下载（共约 612MB，已校验）、`extract.bat` 解压，经 OpenUtau「工具→安装歌手」安装。
+2. 原创歌词「晚风吹过熟悉的街道，月光照着回家的方向」，18 个音符，90 BPM，C 大调（E-G-A-G-E-G-A-C-A / A-C-C-A-F-A-G-B-D），见 `work/qixuan-vocal-test.ustx`。
+3. 导出人声 `work/qixuan-vocal-test.wav`：10.77s，44.1kHz 立体声；自相关 f0 检测与目标音高中位误差 4 音分，18/18 音符命中，确为有旋律的歌声而非朗读。
+4. 伴奏：`composeSong({genre:"lofi",mood:"calm",bpm:90,...},12)` 生成的 Strudel 代码（C–Am–F–G），在 /studio 用 WAV 录制器录得 `work/accomp-recorded.wav`（25.2s）；按底鼓 onset 与低音音高定位小节线（和弦小节起点 4.59s，周期 2.667s 吻合 90BPM），从 C 和弦小节起切 14s。
+5. 混音（numpy）：人声 44.1k→48k，伴奏 ×0.6，人声峰值 0.55，整体归一到 0.89，末尾 1.5s 淡出 → `work/qixuan-vocal-with-strudel-mix.wav`（14.0s，48kHz 立体声）。
+
+### 耗时与资源
+- OpenUtau 渲染 10.77s 人声约 20s（CPU，实时因子约 2×，含首次加载模型）。
+- **未采集到 CPU/内存占用曲线**：`monitor.bat` 本轮未运行，`monitor.csv` 不存在，因此没有资源占用实测数据（不作估算）。如需要，可重渲染一次并同时运行 monitor.bat。
+
+### 局限 / 下一步
+- 伴奏由屏幕录制式导出，起点靠算法对齐，人声与伴奏拍点为人工校验级，不保证采样级精确。
+- 人声发音自然度、咬字需人工试听验收；未调参（无颤音/气声）。
+- 公开发布前须标注：「人声由 AI 歌声合成（绮萱 / DiffSinger）」。
+- 未做：训练、付费服务、集成进工作室。等待验收。
