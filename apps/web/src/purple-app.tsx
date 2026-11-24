@@ -16,6 +16,10 @@ const PurpleStudio = lazy(async () => {
   const studio = await import('#/components/purple-studio')
   return { default: studio.PurpleStudio }
 })
+const CreateMode = lazy(async () => {
+  const create = await import('#/components/create-mode')
+  return { default: create.CreateMode }
+})
 const PatternsPage = lazy(async () => {
   const patterns = await import('#/components/patterns-page')
   return { default: patterns.PatternsPage }
@@ -109,7 +113,14 @@ function AppRoute(props: {
   playback: WebPlayback
   route: BrowserRoute
 }) {
-  if (props.route.pathname === '/') {
+  if (props.route.pathname === '/' && !new URLSearchParams(props.route.search).has('s')) {
+    return (
+      <Suspense fallback={<BootShell label="正在加载创作页面…" />}>
+        <CreateMode navigate={props.navigate} playback={props.playback} />
+      </Suspense>
+    )
+  }
+  if (props.route.pathname === '/' || props.route.pathname === '/studio') {
     const id = new URLSearchParams(props.route.search).get('s')
     return (
       <StudioRoute
@@ -184,10 +195,11 @@ export function PurpleApp() {
 }
 
 function browserRouteLabel(route: BrowserRoute): string {
+  if (route.pathname === '/studio') return 'Purple 高级模式'
   if (route.pathname === '/') {
     return new URLSearchParams(route.search).has('s')
       ? 'Purple 工作室中的分享作品'
-      : 'Purple 工作室'
+      : 'Purple 创作模式'
   }
   if (route.pathname === '/patterns') return 'Public patterns'
   if (route.pathname === '/authorize') return 'Approve an agent'
@@ -195,10 +207,11 @@ function browserRouteLabel(route: BrowserRoute): string {
 }
 
 function browserRouteTitle(route: BrowserRoute): string {
+  if (route.pathname === '/studio') return 'Purple 高级模式'
   if (route.pathname === '/') {
     return new URLSearchParams(route.search).has('s')
       ? 'Shared Strudel Pattern | Purple'
-      : 'Purple: AI Music Production with Strudel'
+      : 'Purple 音乐工坊：用文字创作纯音乐'
   }
   if (route.pathname === '/patterns') return 'Public Strudel Patterns | Purple'
   if (route.pathname === '/authorize') return 'Approve an Agent | Purple'

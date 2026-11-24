@@ -10,8 +10,20 @@
 - 本地起始曲目（纯合成器，不含授权不明采样）：packages/core/src/local-starter-patterns.ts。
 - P4 中文化：主界面、agent-card、purple-app、编辑器/可视化标签。
 
+## 普通用户创作模式（2026-11-24，已完成，待验收）
+- 默认首页 `/` = 创作模式；原代码编辑器移到高级模式 `/studio`（分享链接 `/?s=` 仍进入编辑器，功能不变）。高级模式顶栏有“← 创作模式”。
+- 创作页：文字描述框（可不填，带 4 个示例）、曲风 6 种（Lo-fi/流行/电子舞曲/空灵氛围/电影感/复古放克）、情绪 5 种、BPM 60–180、乐器 6 类多选、时长 30秒/1/2/3分钟。
+- 编曲引擎 packages/core/src/composer.ts：纯规则，按参数+种子拼出 Strudel 代码；只用 sawtooth/triangle/sine/square 与白噪声鼓，无采样、无网络、无付费 API；同参数同种子结果相同，“重新生成”换种子。
+- 描述解析 = 关键词匹配，不是 AI。认不出时明确提示，并给“复制给外部 AI 的编曲指令”；要歌词/人声会明确说明不支持并忽略；钢琴/吉他等会提示用合成音色代替。
+- 试听/停止/重新生成/保存（进高级模式作品库）/导出 WAV（实时录制所选时长，可取消，带进度）。
+- 新手引导：首次打开弹 3 步引导（localStorage `purple.create-guide.v1`），顶部可随时“新手引导”重看；页面本身 ①②③ 分步。
+- 新文件：packages/core/src/composer.ts、packages/ui/src/composer.test.ts、apps/web/src/components/create-mode.tsx；改动：purple-app.tsx（路由）、purple-studio.tsx（返回链接）、styles.css（.mk-* 样式，勿用 cm- 前缀，会撞 CodeMirror）。
+- 验证：定向测试 4 个文件 141 项通过（含 30 种曲风×情绪组合均能求值并只请求内置音色）；core/ui/web tsc 通过；本地构建通过；预览中实测创作/重新生成/保存/停止/导出 WAV（30.04 秒、48kHz 立体声 16 位、无削波）、未识别提示、歌词提示、手机宽度无横向溢出、高级模式往返。
+- 未验证：真人试听音质（尤其合成鼓）、真机手机、各浏览器（仅 Chrome）。
+
 ## 进行中 / 未完成
-- patterns 页、分享/反馈对话框尚未中文化。
+- patterns 页、分享/反馈对话框尚未中文化；高级模式界面仍偏程序员化（本轮未改）。
+- 创作模式暂无“作品列表”页，已保存作品在高级模式的作品库里。
 - 播放音质、WAV 实际听感需人工试听（目前仅自动化+构建验证）。
 
 ## 验证结果（outputs/claude-verify-*.log）
@@ -36,6 +48,6 @@
 - 预览：outputs\start-preview.ps1（http://127.0.0.1:3000/）；重建：双击 outputs\claude-verify.bat（测试+类型检查+构建+刷新预览）或 outputs\rebuild-preview.ps1。
 
 ## 下一步
-1. 浏览器打开预览，试听播放并录制一个 WAV 检查。
+1. 用户验收创作模式：戴耳机试听各曲风，调整节奏/音量平衡。
 2. 补全剩余界面中文化（小改动）。
 3. 经用户许可后再推送到 fsan70056-ctrl/purple；不商业化，授权不明音源不得进公开版本（Strudel AGPL-3.0+，Purple MIT）。

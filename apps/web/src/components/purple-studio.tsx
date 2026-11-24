@@ -416,6 +416,9 @@ export function PurpleStudio({
           <span className="brand-name">PURPLE</span>
         </div>
         <div className="topbar-actions">
+          <InternalLink className="chrome" href="/" navigate={navigate}>
+            ← 创作模式
+          </InternalLink>
           <InternalLink
             className="chrome patterns-link"
             href="/patterns"
