@@ -25,7 +25,7 @@ function superdoughPackageRoot(): string {
   const webaudio = createRequire(web).resolve("@strudel/webaudio");
   const entry = createRequire(webaudio).resolve("superdough");
   // The entry is dist/index.mjs; subpath imports live at the package root.
-  return path.join(entry.slice(0, entry.lastIndexOf("/superdough/")), "superdough");
+  return path.dirname(path.dirname(entry)).replaceAll("\\", "/");
 }
 
 export function sameOriginSuperdoughWorklet(): Plugin {

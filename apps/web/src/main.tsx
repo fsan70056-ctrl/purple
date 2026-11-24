@@ -25,7 +25,7 @@ class CrashScreen extends Component<{ children: ReactNode }, CrashScreenState> {
         <main className="route-message">
           <h1>PURPLE</h1>
           <p role="alert">{this.state.error.message}</p>
-          <a href="/">Reload the studio</a>
+          <a href="/">重新加载工作室</a>
         </main>
       )
     }

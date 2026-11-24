@@ -7,14 +7,16 @@
     "#/*": "./src/*"
   },
   "scripts": {
-    "dev": "cf dev",
-    "build": "cf build",
-    "preview": "vite preview",
+    "dev": "vite --config vite.local.config.ts --configLoader native",
+    "build": "vite build --config vite.local.config.ts --configLoader native",
+    "preview": "vite preview --config vite.local.config.ts --configLoader native",
     "db:migrate": "cf d1 migrations apply 6e9cbe0d-7161-462b-91dc-8cab77fd9047 --dir migrations",
     "deploy": "pnpm run db:migrate && cf deploy --prebuilt",
     "test": "vitest run",
     "typecheck": "cf workers types && tsc --noEmit && tsc --noEmit -p worker/tsconfig.json",
-    "check": "pnpm run test && pnpm run typecheck && pnpm run build"
+    "check": "pnpm run test && pnpm run typecheck && pnpm run build",
+    "dev:cloudflare": "cf dev",
+    "build:cloudflare": "cf build"
   },
   "dependencies": {
     "@fontsource-variable/jetbrains-mono": "^5.3.0",

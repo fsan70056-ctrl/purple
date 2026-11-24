@@ -141,10 +141,9 @@ export function useStrudel(options: StrudelAudioOptions = {}) {
       const promise = (async () => {
         // activate() has already created and resumed ctx synchronously from the
         // user gesture. Keep parser and engine downloads behind that boundary.
-        const [strudel, safeStrudel, pinnedSamples, validation] = await Promise.all([
+        const [strudel, safeStrudel, validation] = await Promise.all([
           import("@strudel/web/web.mjs"),
           import("./safe-strudel"),
-          import("./pinned-samples"),
           import("@purple/core/validation"),
         ]);
 
@@ -153,26 +152,9 @@ export function useStrudel(options: StrudelAudioOptions = {}) {
           onEvalError: (error) => {
             console.error("[Strudel] Internal evaluation failed:", error);
           },
-          // Manifests and audio bases are commit-addressed. The loader parses
-          // data instead of executing it and ignores upstream `_base` fields.
+          // Local research build: synthesizers only. No remote sample manifests.
           prebake: async () => {
             strudel.registerZZFXSounds();
-            try {
-              await pinnedSamples.loadPinnedSamples(strudel);
-            } catch (error) {
-              console.warn(
-                "[Strudel] Pinned samples unavailable; synths remain available.",
-                error,
-              );
-            }
-            // Dirt-Samples names these ho/cp/rm, but the model vocabulary
-            // (and Strudel's own default prebake) says oh/clap/rim; the
-            // drum-machine pack only registers prefixed names
-            // (RolandTR909_oh), so without the aliases bare oh/clap/rim hits
-            // are silently dropped.
-            strudel.soundAlias("ho", "oh");
-            strudel.soundAlias("cp", "clap");
-            strudel.soundAlias("rm", "rim");
           },
         });
 

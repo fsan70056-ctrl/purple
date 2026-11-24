@@ -12,7 +12,7 @@ const SAMPLE_REPOSITORIES = [
 function headerValue(name: string): string {
   const value = headers.match(new RegExp(`^\\s*${name}: ([^\\n]+)$`, "m"))?.[1];
   if (!value) throw new Error(`public/_headers is missing ${name}.`);
-  return value;
+  return value.trimEnd();
 }
 
 function directive(csp: string, name: string): string[] {
