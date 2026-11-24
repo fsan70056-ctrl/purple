@@ -6,6 +6,7 @@
   "exports": {
     "./agent-link": "./src/agent-link.ts",
     "./agent-tools": "./src/agent-tools.ts",
+    "./composer": "./src/composer.ts",
     "./error": "./src/error.ts",
     "./json": "./src/json.ts",
     "./local-starter-patterns": "./src/local-starter-patterns.ts",
