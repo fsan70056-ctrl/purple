@@ -161,10 +161,10 @@ export function AudioVisualizer({ active, getAnalyser }: AudioVisualizerProps) {
   }, [active, getAnalyser]);
 
   return (
-    <figure className={`audio-visualizer ${active ? "active" : "idle"}`} aria-label="Audio visualization">
+    <figure className={`audio-visualizer ${active ? "active" : "idle"}`} aria-label="实时频谱">
       <figcaption>
-        <span><i aria-hidden="true" />{active ? "LIVE OUTPUT" : "OUTPUT"}</span>
-        <span>{active ? "WAVEFORM / SPECTRUM" : "PRESS PLAY TO VISUALIZE"}</span>
+        <span><i aria-hidden="true" />{active ? "实时输出" : "音频输出"}</span>
+        <span>{active ? "波形 / 频谱" : "播放后显示频谱"}</span>
       </figcaption>
       <canvas ref={canvasRef} aria-hidden="true" />
     </figure>

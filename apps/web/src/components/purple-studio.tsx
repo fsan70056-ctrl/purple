@@ -5,7 +5,8 @@ import {
   validatePatternCode,
 } from '@purple/core/pattern'
 import { describeValidationProblem } from '@purple/core/validation'
-import { SHOWCASE_PATTERNS, type ShowcasePattern } from '@purple/core/showcase-patterns'
+import { LOCAL_STARTER_PATTERNS } from '@purple/core/local-starter-patterns'
+import type { ShowcasePattern } from '@purple/core/showcase-patterns'
 import type { SharedPattern } from '@purple/core/shared-pattern'
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { InternalLink, type NavigateInApp } from './internal-link'
@@ -30,6 +31,7 @@ import { PurpleMark } from '@purple/ui/purple-mark'
 import { useAgentLink, type AgentLinkHandlers } from '@purple/ui/use-agent-link'
 import { useWebMcpTools } from '@purple/ui/use-web-mcp'
 import { AudioVisualizer } from '@purple/ui/audio-visualizer'
+import { startWavRecording, type WavRecording } from '@purple/ui/wav-recorder'
 import { hasUnappliedEditorChanges, isTransportActive } from '@purple/ui/use-playback'
 import type { PatternEditorProps } from '@purple/ui/pattern-editor'
 import type { WebPlayback } from '#/lib/playback'
@@ -52,7 +54,7 @@ const ShareDialog = lazy(async () => {
 })
 
 const LIBRARY_WRITE_ERROR =
-  'This browser could not update the library. Allow site data and try again.'
+  '浏览器无法更新作品库。请允许本站使用网站数据后重试。'
 
 function DeferredPatternEditor(props: PatternEditorProps) {
   const [ready, setReady] = useState(false)
@@ -64,7 +66,7 @@ function DeferredPatternEditor(props: PatternEditorProps) {
   }, [])
 
   const fallback = (
-    <pre aria-label="Pattern editor loading" className="editor-loading">
+    <pre aria-label="编辑器加载中" className="editor-loading">
       {props.code}
     </pre>
   )
@@ -109,6 +111,11 @@ export function PurpleStudio({
   )
   const savedPatterns = usePatterns()
   const mainRef = useRef<HTMLElement | null>(null)
+  const [recording, setRecording] = useState<WavRecording | null>(null)
+  const [recordSeconds, setRecordSeconds] = useState(0)
+  const [recordError, setRecordError] = useState<string | null>(null)
+  const recordingRef = useRef<WavRecording | null>(null)
+  const stopRecordingRef = useRef<() => void>(() => {})
   const libraryRef = useRef<HTMLElement | null>(null)
   const libraryButtonRef = useRef<HTMLButtonElement | null>(null)
   const editorHasUnappliedChanges = hasUnappliedEditorChanges(
@@ -147,8 +154,8 @@ export function PurpleStudio({
     }
   }, [])
 
-  const title = customTitle ?? 'Untitled Pattern'
-  const patternName = title.trim() || 'Untitled Pattern'
+  const title = customTitle ?? '未命名作品'
+  const patternName = title.trim() || '未命名作品'
   const patternIsSavable = validatePatternCode(code) !== null
 
   // The agent can send set_pattern and play back to back, faster than React
@@ -193,7 +200,7 @@ export function PurpleStudio({
       const result = await playback.transition(codeRef.current)
       if (result.ok) return { ok: true }
       if (result.kind === 'cancelled') {
-        return { ok: false, error: 'Playback was interrupted by another action.' }
+        return { ok: false, error: '播放被其他操作打断。' }
       }
       return { ok: false, error: result.error }
     },
@@ -265,7 +272,7 @@ export function PurpleStudio({
     applyShareIdentity(id)
     if (!libraryUpdated) {
       setPatternStorageError(
-        'The pattern was published, but this browser could not update its library copy.',
+        '作品已发布，但此浏览器无法更新作品库中的副本。',
       )
       return
     }
@@ -284,16 +291,55 @@ export function PurpleStudio({
     setLibraryOpen(false)
   }
 
-  const exportPattern = () => {
-    const url = URL.createObjectURL(new Blob([`${code.trim()}\n`], { type: 'text/plain' }))
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = patternFilename(title)
+    link.download = filename
     document.body.appendChild(link)
     link.click()
     link.remove()
     // Revoking synchronously aborts the still-pending download outside Chromium.
     setTimeout(() => URL.revokeObjectURL(url), 10_000)
+  }
+
+  const exportPattern = () => {
+    downloadBlob(
+      new Blob([`${code.trim()}\n`], { type: 'text/plain' }),
+      patternFilename(title),
+    )
+  }
+
+  const stopRecording = () => {
+    const active = recordingRef.current
+    if (!active) return
+    recordingRef.current = null
+    setRecording(null)
+    const blob = active.finish()
+    if (!blob) {
+      setRecordError('没有录到声音。请先点击「播放」，再开始录制。')
+      return
+    }
+    downloadBlob(blob, `${patternFilename(title).replace(/\.[^.]+$/, '')}.wav`)
+  }
+  stopRecordingRef.current = stopRecording
+
+  const startRecording = () => {
+    setRecordError(null)
+    const analyser = playback.getOutputAnalyser()
+    if (!analyser || !audible) {
+      setRecordError('请先点击「播放」，听到声音后再开始录制 WAV。')
+      return
+    }
+    try {
+      const take = startWavRecording(analyser, () => stopRecordingRef.current())
+      recordingRef.current = take
+      setRecordSeconds(0)
+      setRecording(take)
+    } catch (error) {
+      console.error('[WAV] Recording could not start:', error)
+      setRecordError('此浏览器无法开始录制。请换用最新版 Chrome 或 Edge。')
+    }
   }
 
   const playCurrentPattern = () => {
@@ -346,6 +392,18 @@ export function PurpleStudio({
     if (focusOnMount) mainRef.current?.focus({ preventScroll: true })
   }, [focusOnMount])
 
+  useEffect(() => {
+    if (!recording) return
+    const timer = setInterval(
+      () => setRecordSeconds(Math.floor(recording.elapsedSeconds())),
+      500,
+    )
+    return () => clearInterval(timer)
+  }, [recording])
+
+  // Leaving the page discards an unfinished take instead of leaking the tap.
+  useEffect(() => () => recordingRef.current?.cancel(), [])
+
   return (
     <main
       className="studio-shell"
@@ -363,7 +421,7 @@ export function PurpleStudio({
             href="/patterns"
             navigate={navigate}
           >
-            PATTERNS
+            公开作品
           </InternalLink>
           <a
             className="chrome source-link"
@@ -371,14 +429,14 @@ export function PurpleStudio({
             rel="noreferrer"
             target="_blank"
           >
-            SOURCE
+            源码
           </a>
           <a
             className="chrome source-link"
             href="https://opencollective.com/tidalcycles"
             rel="noreferrer"
             target="_blank"
-            title="Purple runs on Strudel. Support its developers on Open Collective."
+            title="Purple 基于 Strudel 运行，欢迎在 Open Collective 支持其开发者。"
           >
             ♥ STRUDEL
           </a>
@@ -390,7 +448,7 @@ export function PurpleStudio({
               setFeedbackOpen(true)
             }}
           >
-            FEEDBACK
+            反馈
           </button>
           <button
             ref={libraryButtonRef}
@@ -399,24 +457,24 @@ export function PurpleStudio({
             aria-haspopup="true"
             onClick={() => setLibraryOpen((open) => !open)}
           >
-            LIBRARY
+            作品库
           </button>
           <button
             className={`chrome agent-badge ${agentPanelOpen ? 'open' : ''}`}
             aria-expanded={agentPanelOpen}
             title={
               agentLinked
-                ? 'Your agent is driving this tab. Click for the link.'
-                : 'No agent yet. Click for the link.'
+                ? '你的 AI 助手正在控制此页面，点击查看连接方式。'
+                : '尚未连接 AI 助手，点击查看连接方式。'
             }
             onClick={() => setAgentPanelOpen((open) => !open)}
           >
-            AGENT
+            AI 助手
             <span
               className={`agent-dot ${agentLinked ? 'linked' : ''}`}
               aria-hidden="true"
             />
-            <span className="sr-only">{agentLinked ? ' linked' : ' waiting'}</span>
+            <span className="sr-only">{agentLinked ? ' 已连接' : ' 等待中'}</span>
           </button>
         </div>
       </header>
@@ -445,18 +503,18 @@ export function PurpleStudio({
       ) : null}
 
       {libraryOpen ? (
-        <section className="library-popover" ref={libraryRef} aria-label="Pattern library">
+        <section className="library-popover" ref={libraryRef} aria-label="作品库">
           <header className="library-head">
-            <span>LIBRARY</span>
+            <span>作品库</span>
             <span className="library-count">
-              {savedPatterns.length === 1 ? '1 PATTERN' : `${savedPatterns.length} PATTERNS`}
+              {`${savedPatterns.length} 个作品`}
             </span>
           </header>
           {savedPatterns.length === 0 ? (
             <p className="muted" role={libraryWasCleared ? 'status' : undefined}>
               {libraryWasCleared
-                ? 'Library is clean. No saved patterns.'
-                : 'Nothing saved yet. SAVE keeps a pattern in this browser.'}
+                ? '作品库是空的，没有已保存的作品。'
+                : '还没有保存的作品。点击「保存」会把作品存在此浏览器中。'}
             </p>
           ) : (
             [...savedPatterns]
@@ -468,9 +526,9 @@ export function PurpleStudio({
                   </button>
                   <button
                     className="delete"
-                    aria-label={`Delete ${pattern.title}`}
+                    aria-label={`删除 ${pattern.title}`}
                     onClick={() => {
-                      if (!window.confirm(`Delete “${pattern.title}” from this browser?`)) return
+                      if (!window.confirm(`从此浏览器删除“${pattern.title}”？`)) return
                       if (!removePattern(pattern.id)) {
                         setPatternStorageError(LIBRARY_WRITE_ERROR)
                         return
@@ -492,7 +550,7 @@ export function PurpleStudio({
           <div className="editor-bar">
             <input
               className="title-input"
-              aria-label="Pattern title"
+              aria-label="作品标题"
               name="pattern-title"
               value={title}
               onChange={(event) => commitCustomTitle(event.target.value)}
@@ -504,37 +562,48 @@ export function PurpleStudio({
               onClick={toggleSavedPattern}
               title={
                 currentPatternSaved
-                  ? 'Remove from this browser’s library'
-                  : 'Save to this browser’s library'
+                  ? '从此浏览器作品库中移除'
+                  : '保存到此浏览器作品库'
               }
             >
-              <span aria-live="polite">{currentPatternSaved ? 'SAVED' : 'SAVE'}</span>
+              <span aria-live="polite">{currentPatternSaved ? '已保存' : '保存'}</span>
             </button>
             <button
               className={`chrome ${shareId ? 'saved' : ''}`}
               disabled={!patternIsSavable}
               title={
                 shareId
-                  ? 'This pattern is published. Click for the link.'
+                  ? '此作品已发布，点击查看链接。'
                   : originShareId
-                    ? 'Publish a new public copy of this pattern.'
-                    : 'Publish to the public gallery'
+                    ? '发布此作品的新公开副本。'
+                    : '发布到公开作品库（本地预览版不可用）'
               }
               onClick={() => setShareOpen(true)}
             >
-              <span aria-live="polite">{shareId ? 'SHARED' : 'SHARE'}</span>
+              <span aria-live="polite">{shareId ? '已分享' : '分享'}</span>
             </button>
-            <button className="chrome export" onClick={exportPattern}>
-              EXPORT
+            <button
+              className="chrome export"
+              title="把当前作品的 Strudel 代码导出为文本文件"
+              onClick={exportPattern}
+            >
+              导出代码
+            </button>
+            <button
+              className={`chrome export ${recording ? 'recording' : ''}`}
+              title="把正在播放的声音录制成 WAV 文件（最长 5 分钟）"
+              onClick={recording ? stopRecording : startRecording}
+            >
+              {recording ? `■ 停止并保存 ${formatClock(recordSeconds)}` : '录制 WAV'}
             </button>
             {editorHasUnappliedChanges ? (
               <button
                 className="chrome apply-changes"
-                aria-label="Apply editor changes to playback (Ctrl+Enter)"
-                title="Apply editor changes (Ctrl+Enter)"
+                aria-label="将编辑器修改应用到播放（Ctrl+Enter）"
+                title="应用修改（Ctrl+Enter）"
                 onClick={playCurrentPattern}
               >
-                APPLY
+                应用
               </button>
             ) : null}
             <button
@@ -563,6 +632,7 @@ export function PurpleStudio({
           <AudioVisualizer active={audible} getAnalyser={playback.getOutputAnalyser} />
 
           {playback.error ? <p className="error" role="alert">{playback.error}</p> : null}
+          {recordError ? <p className="error" role="alert">{recordError}</p> : null}
           {patternStorageError ? (
             <p className="error" role="alert">{patternStorageError}</p>
           ) : null}
@@ -637,9 +707,15 @@ function workingPattern(
 
 function randomStarter(): ShowcasePattern {
   const random = crypto.getRandomValues(new Uint32Array(1))[0]
-  return SHOWCASE_PATTERNS[random % SHOWCASE_PATTERNS.length]
+  return LOCAL_STARTER_PATTERNS[random % LOCAL_STARTER_PATTERNS.length]
+}
+
+function formatClock(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
 }
 
 function transportLabel(state: WebPlayback['playbackState']): string {
-  return isTransportActive(state) ? '■ STOP' : '▶ PLAY'
+  return isTransportActive(state) ? '■ 停止' : '▶ 播放'
 }

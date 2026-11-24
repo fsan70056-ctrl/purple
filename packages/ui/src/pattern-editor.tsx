@@ -66,7 +66,7 @@ const EDITOR_SETUP: Extension = [
     ...foldKeymap,
   ]),
   EditorView.lineWrapping,
-  EditorView.contentAttributes.of({ "aria-label": "Pattern code" }),
+  EditorView.contentAttributes.of({ "aria-label": "音乐代码" }),
   EditorView.theme({
     "&": { height: "100%" },
     ".cm-scroller": { height: "100%" },
@@ -96,7 +96,7 @@ export function PatternEditor({
   const onCodeChangeRef = useRef(onCodeChange);
   const evaluateRef = useRef(onEvaluate);
   const getActiveSourceRangesRef = useRef(getActiveSourceRanges);
-  const [darkTheme, setDarkTheme] = useState(prefersDarkEditor);
+  const [darkTheme, setDarkTheme] = useState(() => true);
   const [themeCompartment] = useState(() => new Compartment());
   codeRef.current = code;
   onCodeChangeRef.current = onCodeChange;

@@ -33,7 +33,7 @@ function StudioRoute(props: {
   const { id } = props
   const [pattern, setPattern] = useState<SharedPattern | null>(null)
   const [error, setError] = useState<string | null>(
-    id && !isShareId(id) ? 'That shared pattern link is invalid.' : null,
+    id && !isShareId(id) ? '这个分享链接无效。' : null,
   )
 
   useEffect(() => {
@@ -43,7 +43,7 @@ function StudioRoute(props: {
       .then(setPattern)
       .catch((reason: Error) => {
         if (reason.name === 'AbortError') return
-        setError('That shared pattern could not be found.')
+        setError('找不到这个分享的作品。')
       })
     return () => controller.abort()
   }, [id])
@@ -52,16 +52,16 @@ function StudioRoute(props: {
     return (
       <RouteMessage message={error}>
         <InternalLink href="/patterns" navigate={props.navigate}>
-          Browse public patterns
+          浏览公开作品
         </InternalLink>
       </RouteMessage>
     )
   }
   if (id && !pattern) {
-    return <BootShell label="LOADING PATTERN…" />
+    return <BootShell label="正在加载作品…" />
   }
   return (
-    <Suspense fallback={<BootShell label="LOADING STUDIO…" />}>
+    <Suspense fallback={<BootShell label="正在加载工作室…" />}>
       <PurpleStudio
         focusOnMount
         navigate={props.navigate}
@@ -122,14 +122,14 @@ function AppRoute(props: {
   }
   if (props.route.pathname === '/authorize') {
     return (
-      <Suspense fallback={<BootShell label="LOADING…" />}>
+      <Suspense fallback={<BootShell label="正在加载…" />}>
         <AgentAuthorize search={props.route.search} />
       </Suspense>
     )
   }
   if (props.route.pathname === '/patterns') {
     return (
-      <Suspense fallback={<BootShell label="LOADING PATTERNS…" />}>
+      <Suspense fallback={<BootShell label="正在加载作品…" />}>
         <PatternsPage
           focusOnMount
           navigate={props.navigate}
@@ -139,9 +139,9 @@ function AppRoute(props: {
     )
   }
   return (
-    <RouteMessage message="This page does not exist.">
+    <RouteMessage message="此页面不存在。">
       <InternalLink href="/" navigate={props.navigate}>
-        Return to the studio
+        返回工作室
       </InternalLink>
     </RouteMessage>
   )
@@ -186,8 +186,8 @@ export function PurpleApp() {
 function browserRouteLabel(route: BrowserRoute): string {
   if (route.pathname === '/') {
     return new URLSearchParams(route.search).has('s')
-      ? 'Shared pattern in Purple studio'
-      : 'Purple studio'
+      ? 'Purple 工作室中的分享作品'
+      : 'Purple 工作室'
   }
   if (route.pathname === '/patterns') return 'Public patterns'
   if (route.pathname === '/authorize') return 'Approve an agent'

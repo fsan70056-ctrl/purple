@@ -194,6 +194,11 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline-offs
   background: color-mix(in srgb, var(--active) 18%, transparent);
   color: var(--active);
 }
+.chrome.recording {
+  border-color: color-mix(in srgb, #ff5d73 60%, transparent);
+  background: color-mix(in srgb, #ff5d73 14%, transparent);
+  color: #ff5d73; font-weight: 600;
+}
 /* Solid keys. The fill colour is what distinguishes them; the geometry,
    label treatment and press feel are shared. */
 .primary, .transport {
