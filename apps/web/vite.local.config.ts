@@ -36,7 +36,7 @@ export default defineConfig({
   root,
   resolve: { alias },
   plugins: [react(), worklet],
-  server: { host: '127.0.0.1', port: 3000, strictPort: true },
-  preview: { host: '127.0.0.1', port: 3000, strictPort: true },
+  server: { host: '127.0.0.1', port: 3000, strictPort: true, proxy: { '/local-song-api': { target: 'http://127.0.0.1:8765', changeOrigin: true, rewrite: (p: string) => p.replace(/^\/local-song-api/, '') } } },
+  preview: { host: '127.0.0.1', port: 3000, strictPort: true, proxy: { '/local-song-api': { target: 'http://127.0.0.1:8765', changeOrigin: true, rewrite: (p: string) => p.replace(/^\/local-song-api/, '') } } },
   build: { outDir: 'dist-local', emptyOutDir: true },
 })

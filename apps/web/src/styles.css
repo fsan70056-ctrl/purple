@@ -897,3 +897,17 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline-offs
   .mk-card { padding: 16px; border-radius: 14px; }
   .mk-btn, .mk-play { flex: 1 1 45%; }
 }
+
+/* ---- song mode (local virtual singer) ---- */
+.mk-modes { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+.mk-song-label { display: block; margin: 12px 0 6px; font-weight: 700; }
+.mk-song-row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px; }
+.mk-select { min-width: 220px; padding: 10px 12px; border: 1px solid var(--mk-line); border-radius: 10px; background: #0d0c16; color: var(--mk-ink); font: inherit; }
+.mk-song .mk-actions a.mk-btn { display: inline-flex; align-items: center; text-decoration: none; }
+.mk-song-result { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--mk-line); }
+.mk-song-h { margin: 0 0 8px; font-size: 17px; }
+.mk-audio { width: 100%; }
+.mk-song-vol { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; align-items: center; margin: 12px 0; }
+.mk-song-vol button { grid-column: 1 / -1; justify-self: start; }
+.mk-song-stats { margin-top: 10px; color: var(--mk-dim); font-size: 13px; }
+.mk-song-stats ul { margin: 6px 0 0; padding-left: 18px; line-height: 1.7; }

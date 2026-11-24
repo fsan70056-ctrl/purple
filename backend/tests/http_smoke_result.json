@@ -1,0 +1,208 @@
+{
+  "checks": [
+    {
+      "name": "health",
+      "ok": true,
+      "detail": "{'ok': True, 'singer_ready': True, 'max_duration_seconds': 60, 'concurrency': 1}"
+    },
+    {
+      "name": "singers lists 绮萱 with AI label",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "foreign Origin is rejected",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "name": "foreign Host header is rejected",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "name": "code injection is refused before Node",
+      "ok": true,
+      "detail": "400"
+    },
+    {
+      "name": "path traversal job id -> 404",
+      "ok": true,
+      "detail": "404"
+    },
+    {
+      "name": "unknown job -> 404",
+      "ok": true,
+      "detail": "404"
+    },
+    {
+      "name": "lyrics preview",
+      "ok": true,
+      "detail": "16.0"
+    },
+    {
+      "name": "15s: accepted",
+      "ok": true,
+      "detail": "202"
+    },
+    {
+      "name": "15s: finished",
+      "ok": true,
+      "detail": "None"
+    },
+    {
+      "name": "15s: progress was reported live through accomp>vocal",
+      "ok": true,
+      "detail": "['accomp', 'accomp', 'vocal', 'vocal', 'vocal', 'done']"
+    },
+    {
+      "name": "15s: mix is stereo 44.1k and as long as the song",
+      "ok": true,
+      "detail": "16.00s"
+    },
+    {
+      "name": "15s: mix peak <= 0.9 (no clipping)",
+      "ok": true,
+      "detail": "0.591"
+    },
+    {
+      "name": "15s: sung melody matches the plan",
+      "ok": true,
+      "detail": "18 notes, median 6.7 cents, 100% within 50c"
+    },
+    {
+      "name": "15s: vocal enters after the intro bar",
+      "ok": true,
+      "detail": "first sound 2.64s, bar 2.67s"
+    },
+    {
+      "name": "15s: independent volume remix works",
+      "ok": true,
+      "detail": "2822656"
+    },
+    {
+      "name": "only 1 running + 2 waiting (4th refused with 429)",
+      "ok": true,
+      "detail": "[202, 202, 202, 429]"
+    },
+    {
+      "name": "running job can be cancelled",
+      "ok": true,
+      "detail": "cancelled after 1.0s"
+    },
+    {
+      "name": "cancelled job leaves no audio",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "30s: accepted",
+      "ok": true,
+      "detail": "202"
+    },
+    {
+      "name": "30s: finished",
+      "ok": true,
+      "detail": "None"
+    },
+    {
+      "name": "30s: progress was reported live through accomp>vocal",
+      "ok": true,
+      "detail": "['accomp', 'accomp', 'vocal', 'vocal', 'vocal', 'vocal', 'vocal', 'mix', 'done']"
+    },
+    {
+      "name": "30s: mix is stereo 44.1k and as long as the song",
+      "ok": true,
+      "detail": "29.33s"
+    },
+    {
+      "name": "30s: mix peak <= 0.9 (no clipping)",
+      "ok": true,
+      "detail": "0.606"
+    },
+    {
+      "name": "30s: sung melody matches the plan",
+      "ok": true,
+      "detail": "32 notes, median 5.8 cents, 100% within 50c"
+    },
+    {
+      "name": "30s: vocal enters after the intro bar",
+      "ok": true,
+      "detail": "first sound 2.64s, bar 2.67s"
+    },
+    {
+      "name": "30s: independent volume remix works",
+      "ok": true,
+      "detail": "5174656"
+    }
+  ],
+  "15s": {
+    "wall_seconds": 12.4,
+    "timings": {
+      "plan": 0.0,
+      "accomp": 1.01,
+      "model_load": 0.83,
+      "vocal": 9.94,
+      "mix": 0.28,
+      "total": 12.07
+    },
+    "metrics": {
+      "samples": 23,
+      "logical_cores": 16,
+      "cpu_avg_percent_of_machine": 44.9,
+      "cpu_peak_percent_of_machine": 62.5,
+      "cpu_avg_cores_busy": 7.18,
+      "python_working_set_peak_mb": 648,
+      "system_available_min_mb": 1945,
+      "system_available_start_mb": 2455
+    },
+    "song": {
+      "bpm": 90,
+      "key": "C major",
+      "bars": 6,
+      "duration_seconds": 16.0,
+      "progression": [
+        "I",
+        "VI",
+        "IV",
+        "V"
+      ]
+    },
+    "pitch_median_cents": 6.7
+  },
+  "30s": {
+    "wall_seconds": 23.5,
+    "timings": {
+      "plan": 0.0,
+      "accomp": 2.11,
+      "model_load": 0.71,
+      "vocal": 19.71,
+      "mix": 0.51,
+      "total": 23.05
+    },
+    "metrics": {
+      "samples": 45,
+      "logical_cores": 16,
+      "cpu_avg_percent_of_machine": 45.5,
+      "cpu_peak_percent_of_machine": 62.6,
+      "cpu_avg_cores_busy": 7.29,
+      "python_working_set_peak_mb": 659,
+      "system_available_min_mb": 1868,
+      "system_available_start_mb": 2323
+    },
+    "song": {
+      "bpm": 90,
+      "key": "C major",
+      "bars": 11,
+      "duration_seconds": 29.333,
+      "progression": [
+        "I",
+        "VI",
+        "IV",
+        "V"
+      ]
+    },
+    "pitch_median_cents": 5.8
+  },
+  "all_passed": true
+}

@@ -1,0 +1,9 @@
+stack(
+  n("<[0,2,4] [5,7,9] [3,5,7] [4,6,8]>").scale("C3:major").s("sawtooth").attack(.4).release(.8).lpf(520).room(0.6).gain(0.14),
+  n("<[0,2,4] [5,7,9] [3,5,7] [4,6,8]>").scale("C4:major").s("triangle").struct("x ~ ~ ~ x ~ x ~").lpf(1040).room(0.6).gain(0.20),
+  n("<0 5 3 4>").scale("C2:major").s("sine").struct("x ~ ~ x ~ ~ x ~").lpf(364).gain(.5),
+  n("<[0 2 4 7 4 2 4 2] [5 7 9 12 9 7 9 7] [3 5 7 10 7 5 7 5] [4 6 8 11 8 6 8 6]>").scale("C4:major").s("triangle").decay(.22).sustain(0).delay(.2).room(0.6).gain(.24),
+  note("c1").s("sine").struct("x ~ ~ ~ ~ x x ~").penv(24).pdecay(.05).decay(.22).sustain(0).gain(.9),
+  s("white").struct("~ ~ x ~ ~ ~ x ~").decay(.12).sustain(0).bpf(1900).gain(.4),
+  s("white").struct("x ~ x x ~ x x ~").decay(.04).sustain(0).hpf(7500).gain(.2)
+).cpm(90/4)

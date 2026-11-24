@@ -44,3 +44,23 @@ available at https://openfontlicense.org.
 Other JavaScript dependencies retain the licenses declared in their package
 metadata. Their exact versions and resolved sources are fixed by
 `pnpm-lock.yaml`.
+
+## Local song backend (optional, `backend/`; not part of the web bundle)
+
+The Python backend that sings lyrics locally uses these packages, installed from PyPI
+into a local virtual environment (not committed): FastAPI (MIT), Uvicorn (BSD-3-Clause),
+NumPy (BSD-3-Clause), ONNX Runtime (MIT), PyYAML (MIT) and pypinyin (MIT).
+
+It reads two **voice models that are NOT part of this repository and must not be committed
+or redistributed from it**; they stay on the local machine under `voice-lab/`:
+
+- Voicebank **绮萱 (Qixuan) v2.7.0** for DiffSinger/OpenUtau. Outputs may be used personally and
+  commercially, but a public release must state that the vocals are AI-synthesized and credit
+  "绮萱" and "DiffSinger". The model weights must not be modified, converted or distilled, and
+  outputs must not be used to train voice models. Redistribution is only allowed complete,
+  unmodified and free of charge. See the `Terms_of_Use` file shipped with the voicebank.
+- Vocoder **PC-NSF-HiFiGAN 44.1 kHz (2025.02)** by OpenVPI, **CC BY-NC-SA 4.0** (non-commercial,
+  attribution, share-alike).
+
+Generated WAV files carry an "AI-synthesized vocal" note in their metadata. This build is for
+personal research only.

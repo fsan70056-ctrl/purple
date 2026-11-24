@@ -1,0 +1,8 @@
+.venv/
+.strudel-runtime/
+output/
+__pycache__/
+*.pyc
+setup-log.txt
+server.log
+tests/http_smoke.log

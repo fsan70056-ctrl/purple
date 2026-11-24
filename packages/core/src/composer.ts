@@ -34,6 +34,16 @@ export interface Composition {
   /** One line a person can read: key, tempo, layers. */
   summary: string;
   bars: number;
+  /** Key, tempo and chord roots, so a vocal line can be written on the same grid as the code. */
+  meta: CompositionMeta;
+}
+
+export interface CompositionMeta {
+  bpm: number;
+  root: string;
+  mode: "major" | "minor" | "phrygian";
+  /** Scale degree (0-6) of each bar's chord root; one chord per bar, cycling. */
+  progression: number[];
 }
 
 interface GenreSpec {
@@ -161,7 +171,7 @@ export const GENRE_SPECS: Readonly<Record<Genre, GenreSpec>> = {
 
 interface MoodSpec {
   label: string;
-  mode: string;
+  mode: CompositionMeta["mode"];
   progression: readonly number[];
   brightness: number;
   room: number;
@@ -311,6 +321,7 @@ export function composeSong(params: ComposeParams, seed: number): Composition {
     code,
     summary: `${keyLabel} · ${bpm} BPM · ${names}`,
     bars,
+    meta: { bpm, root: rootName, mode: mood.mode, progression: [...progression] },
   };
 }
 

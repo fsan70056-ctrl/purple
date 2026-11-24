@@ -81,3 +81,44 @@
 - 人声发音自然度、咬字需人工试听验收；未调参（无颤音/气声）。
 - 公开发布前须标注：「人声由 AI 歌声合成（绮萱 / DiffSinger）」。
 - 未做：训练、付费服务、集成进工作室。等待验收。
+
+## 本地歌曲后端（Python）+ 前端「歌曲」模式
+
+目标：网页输入歌词 → 一键生成「伴奏 + 虚拟歌手人声」的完整 WAV，不再手动操作 OpenUtau。零付费、不上传、仅本机。
+
+### 架构（backend/，已提交；模型与大文件不入库）
+- `app/lyrics.py` 歌词分句 → pypinyin 转拼音 → 用声库自带 `dsdur/dsdict-zh.yaml`（603 个拼音）映射音素（只流式读文件开头，约 0.04 秒）。
+- `app/song.py` 统一歌曲结构 `Song`：BPM、调式/主音、每小节和弦（1 小节 1 和弦、1 个 Strudel cycle = 1 小节）、小节/节拍格（4/4，每小节 8 个八分格）、人声音符时间轴。`plan_bars` 按歌词自动补足小节数（默认示例在 80BPM/15 秒放不下时会自动延长，界面会提示）。旋律规则：弧形轮廓、强拍落和弦音、弱拍级进、句尾半终止、末句回主音。
+- `app/singer.py` **无界面 DiffSinger 推理**（ONNX Runtime CPU）：音素/语言/时长/f0 → 方差模型预测气声与发声(dB) → 声学模型(depth 0.6, steps 20) → PC-NSF-HiFiGAN 声码器。辅音提前于拍点、元音踩拍；f0 含 5 点平滑滑音与长音颤音。按歌词句分段合成。**未使用 OpenUtau 命令行**（没有验证过的命令行渲染接口，故未假设）。
+  - 关键发现：气声/发声必须喂方差模型预测值（元音约 −20/−46 dB）；喂 0 会比 OpenUtau 响约 20dB 并削波。
+- `app/accomp.py` 伴奏：沿用现有 `composer.ts` 生成的 Strudel 代码，Node 无头查询事件（`tools/strudel_events.mjs`，运行时由 `tools/build_strudel_runtime.py` 从仓库 pnpm 库复制到 `.strudel-runtime/`，不下载），再用 numpy 合成（振荡器/ADSR/双二阶滤波/混响/回声）。注意：此 Strudel 版本 `.cpm(x)` 为 `fast(x/60)`，事件时间单位就是秒。与浏览器 Strudel 实录对比：鼓/低音包络相关 0.92，踩镲 0.99，琶音 0.79，零延迟。
+  - 安全：后端会在 Node 里求值伴奏文本，所以 `validate_code` 只接受白名单 Strudel 调用（拒绝 `;`、反引号、未知标识符等），提交时先验证。
+- `app/mixer.py` 自动混音：人声/伴奏电平平衡（人声约高 7dB）、人声轻混响、人声出现时伴奏闪避 2.5dB、淡入 0.15s/淡出 1.6s、峰值上限 0.89；`wavio.py` 写 WAV 并在 LIST/INFO 写入 AI 合成标识。
+- `app/jobs.py` 单工作线程队列（同一时刻只跑 1 个，最多再排 2 个，其余 429）、进度（plan/accomp/vocal/mix）、取消（排队中立即取消；运行中在当前句结束后停止；Node 子进程直接 kill）、错误信息、每任务 `ResourceSampler`（进程 CPU、工作集、系统可用内存，真实采样）、空闲后卸载模型。内存低于 1200MB 拒绝开始。
+- `app/main.py` FastAPI，**仅监听 127.0.0.1:8765**；校验 Host（防 DNS 重绑定）与 Origin（只允许本地预览源）；CORS 仅 GET/POST；任务 ID 必须是 32 位十六进制，音频名白名单（无任意路径）。接口：`/api/health /api/singers /api/lyrics/preview /api/songs /api/jobs/{id} /api/jobs/{id}/cancel /api/jobs/{id}/audio/{mix|vocal|accomp}.wav /api/jobs/{id}/download.wav?vocal=&accomp=`（按音量重新混音）。
+- 前端：`song-mode.tsx`（创作页新增「纯音乐 / 歌曲」切换：歌词框、虚拟歌手选择、15/30 秒、生成/取消、真实进度、完整歌曲试听、人声/伴奏独立音量(滑块→重新混音试听)、WAV 下载、实际耗时与资源占用、AI 合成标识）。通过本地 vite 的 `/local-song-api` 同源代理访问后端，**未改动 CSP**；生产/Cloudflare 构建里没有该代理，页面会提示后端未启动。纯音乐模式与高级代码编辑器原样保留。`composer.ts` 只做了增量：`Composition.meta`（bpm/root/mode/progression），`MoodSpec.mode` 收窄类型。
+
+### 运行方式
+1. 首次：双击 `backend\setup-backend.bat`（建 .venv、pip 装 fastapi/uvicorn/numpy/onnxruntime/pyyaml/pypinyin、构建 Strudel 运行时；日志 `setup-log.txt`）。
+2. 日常：双击 `outputs\claude-start-song-stack.bat`（重启后端 8765 与预览 3000）；改前端后先双击 `outputs\claude-verify.bat`（测试+类型检查+构建+刷新预览）。浏览器打开 http://127.0.0.1:3000/ → 「🎤 歌曲」。
+3. 验收脚本：`outputs\claude-run-smoke.bat`（端到端，结果在 `backend/tests/http_smoke_result.json` / `http_smoke.log`）。单元测试：`backend\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py"`（14 项）。
+
+### 实测（本机 Ryzen 7 7730U，16 逻辑核，真实采样；空闲内存仅约 2.5GB）
+| 项目 | 15 秒档（实得 16.0 秒，6 小节） | 30 秒档（实得 29.3 秒，11 小节） |
+|---|---|---|
+| 总耗时 | 12.1 秒 | 23.1 秒 |
+| 伴奏 / 载入模型 / 人声 / 混音 | 1.0 / 0.8 / 9.9 / 0.3 秒 | 2.1 / 0.7 / 19.7 / 0.5 秒 |
+| CPU 平均 / 峰值（占整机） | 44.9% / 62.5%（约 7 核在忙） | 45.5% / 62.6% |
+| 后端进程内存峰值 | 648 MB | 659 MB |
+| 系统可用内存（起点→最低） | 2455 → 1945 MB | 2323 → 1868 MB |
+| 人声音高 | 18/18 音符，中位误差 6.7 音分 | 32/32，中位 5.8 音分 |
+- 验收脚本 27 项全部通过（第一次整套运行 11.6 / 22.4 秒，结果一致）：Origin/Host 拦截、代码注入拒绝、路径穿越、队列上限（1 运行+2 排队，第 4 个 429）、运行中取消（0.5 秒内生效）、取消后无残留音频、混音不削波、人声在前奏小节之后进入、独立音量重混。
+- 一个修过的坑：混音阶段曾因 0.3 秒窗口卷积耗时 61 秒，改为 O(N) 滑动平均后 0.2 秒。
+- 试听文件：`voice-lab/work/song-15s-mix.wav`、`song-30s-mix.wav`（另有分轨 vocal/accomp 与 `remix-vocal40`）。
+
+### 已知局限 / 下一步
+- 人声为规则旋律 + 声库默认表现，无表情参数；咬字/情感需人耳验收。歌词只支持中文汉字；英文/数字被忽略并提示。
+- 取消在「当前这一句」合成结束后生效（ONNX 单次推理不可中断）；一句通常 4–10 秒。
+- 独立音量为「滑块 → 后端重混 → 试听」，不是实时拖动。
+- 授权：绮萱与 PC-NSF-HiFiGAN（CC BY-NC-SA 4.0）仅本机；公开发布须标注「AI 合成」并署名绮萱/DiffSinger；见 THIRD_PARTY_NOTICES.md。本分支未提交任何模型/音频文件。
+- 待办：打包成一个启动入口；多歌手；更丰富的旋律/段落结构（主歌+副歌）；节奏型/和弦与歌词情绪联动。

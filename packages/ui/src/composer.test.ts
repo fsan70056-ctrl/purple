@@ -119,6 +119,20 @@ describe("composeSong", () => {
   });
 });
 
+describe("composition meta (shared with the local vocal backend)", () => {
+  it("exposes tempo, key and one chord root per bar that match the code", () => {
+    const made = composeSong(base(), 12);
+    expect(made.meta.bpm).toBe(90);
+    expect(made.code).toContain(`.cpm(${made.meta.bpm}/4)`);
+    expect(made.code).toContain(`.scale("${made.meta.root}3:${made.meta.mode}")`);
+    expect(made.meta.progression).toHaveLength(4);
+    expect(made.meta.progression.every((degree) => degree >= 0 && degree <= 6)).toBe(true);
+    expect(made.code).toContain(
+      `n("<${made.meta.progression.map((root) => `[${root},${root + 2},${root + 4}]`).join(" ")}>")`,
+    );
+  });
+});
+
 describe("readPrompt", () => {
   it("reads genre, mood, tempo and instruments from keywords", () => {
     const reading = readPrompt("雨夜咖啡馆，平静的 lofi，80 BPM，要有贝斯和鼓");

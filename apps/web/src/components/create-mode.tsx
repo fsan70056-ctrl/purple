@@ -34,6 +34,7 @@ import {
 import type { WebPlayback } from '#/lib/playback'
 import { InternalLink, type NavigateInApp } from './internal-link'
 import { ModalDialog } from './modal-dialog'
+import { SongMode } from './song-mode'
 
 const GUIDE_KEY = 'purple.create-guide.v1'
 
@@ -121,6 +122,7 @@ export function CreateMode(props: {
   const [copied, setCopied] = useState(false)
   const [guideOpen, setGuideOpen] = useState(() => !guideSeen())
   const [guideStep, setGuideStep] = useState(0)
+  const [mode, setMode] = useState<'music' | 'song'>('music')
   const [exporting, setExporting] = useState<{ seconds: number; total: number } | null>(null)
   const savedPatterns = usePatterns()
 
@@ -314,6 +316,28 @@ export function CreateMode(props: {
         </p>
       </section>
 
+      <div className="mk-modes" role="group" aria-label="创作类型">
+        <button
+          type="button"
+          aria-pressed={mode === 'music'}
+          className={`mk-chip ${mode === 'music' ? 'on' : ''}`}
+          onClick={() => setMode('music')}
+        >
+          🎵 纯音乐
+        </button>
+        <button
+          type="button"
+          aria-pressed={mode === 'song'}
+          className={`mk-chip ${mode === 'song' ? 'on' : ''}`}
+          onClick={() => {
+            playback.stop()
+            setMode('song')
+          }}
+        >
+          🎤 歌曲（本机虚拟歌手，试验）
+        </button>
+      </div>
+
       <div className="mk-grid">
         <section className="mk-card" aria-label="创作设置">
           <h2 className="mk-step"><b>①</b> 描述你想听的音乐（可不填）</h2>
@@ -409,6 +433,7 @@ export function CreateMode(props: {
               ))}
             </div>
           </fieldset>
+          {mode === 'music' ? (
           <fieldset className="mk-field">
             <legend>音乐时长（导出 WAV 的长度）</legend>
             <div className="mk-chips">
@@ -425,7 +450,10 @@ export function CreateMode(props: {
               ))}
             </div>
           </fieldset>
+          ) : null}
 
+          {mode === 'music' ? (
+            <>
           <h2 className="mk-step"><b>③</b> 开始创作</h2>
           <button
             type="button"
@@ -437,11 +465,27 @@ export function CreateMode(props: {
           </button>
           <p className="mk-honest">
             这是本地规则编曲：按你的选项和描述里的关键词，用内置合成器音色编排纯音乐。
-            不是 AI 生成，没有歌声，也不会写歌词。
+            不是 AI 生成，没有歌声，也不会写歌词（想要歌声请切到「歌曲」）。
           </p>
           {error ? <p className="mk-error" role="alert">{error}</p> : null}
+            </>
+          ) : (
+            <p className="mk-honest">
+              歌曲模式使用上面选的曲风、情绪、速度和乐器编伴奏（“主奏”会自动排除，避免和人声抢位置）。
+              歌词和生成按钮在右边。
+            </p>
+          )}
         </section>
 
+        {mode === 'song' ? (
+          <SongMode
+            genre={genre}
+            mood={mood}
+            bpm={bpm}
+            instruments={instruments}
+            onBeforeGenerate={() => playback.stop()}
+          />
+        ) : (
         <section className="mk-card mk-result" aria-label="作品" aria-live="polite">
           {!song ? (
             <div className="mk-empty">
@@ -543,6 +587,7 @@ export function CreateMode(props: {
             </div>
           ) : null}
         </section>
+        )}
       </div>
 
       <footer className="mk-foot">
