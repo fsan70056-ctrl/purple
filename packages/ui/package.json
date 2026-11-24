@@ -13,7 +13,8 @@
     "./use-playback": "./src/use-playback.ts",
     "./use-strudel": "./src/use-strudel.ts",
     "./use-web-mcp": "./src/use-web-mcp.ts",
-    "./audio-visualizer": "./src/audio-visualizer.tsx"
+    "./audio-visualizer": "./src/audio-visualizer.tsx",
+    "./wav-recorder": "./src/wav-recorder.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

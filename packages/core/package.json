@@ -8,6 +8,7 @@
     "./agent-tools": "./src/agent-tools.ts",
     "./error": "./src/error.ts",
     "./json": "./src/json.ts",
+    "./local-starter-patterns": "./src/local-starter-patterns.ts",
     "./mcp-server": "./src/mcp-server.ts",
     "./pattern": "./src/pattern.ts",
     "./seed-patterns": "./src/seed-patterns.ts",

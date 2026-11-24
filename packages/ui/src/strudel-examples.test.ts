@@ -5,6 +5,7 @@
  * with silence, and a non-expression one would break every crossfade.
  */
 import { beforeAll, describe, expect, it } from "vitest";
+import { LOCAL_STARTER_PATTERNS } from "@purple/core/local-starter-patterns";
 import { SEED_PATTERNS } from "@purple/core/seed-patterns";
 import { SHOWCASE_PATTERNS } from "@purple/core/showcase-patterns";
 import { buildTransitionCode } from "@purple/core/transitions";
@@ -113,6 +114,34 @@ describe("SHOWCASE_PATTERNS", () => {
       await expectPatternEvents(buildTransitionCode(code, 's("bd*4")', 8, 4));
     },
   );
+});
+
+describe("LOCAL_STARTER_PATTERNS", () => {
+  const SYNTH_VOICES = new Set(["sawtooth", "triangle", "sine", "square"]);
+
+  it.each(LOCAL_STARTER_PATTERNS)(
+    "$title evaluates to a pattern with events",
+    async ({ code }) => {
+      await expectPatternEvents(code);
+    },
+  );
+
+  it.each(LOCAL_STARTER_PATTERNS)(
+    "$title asks the engine only for built-in synth voices",
+    async ({ code }) => {
+      const pattern = await evaluatePattern(code);
+      const requested = auditHapSounds(pattern.queryArc(0, 8), () => false);
+      expect(requested.length).toBeGreaterThan(0);
+      for (const name of requested) expect(SYNTH_VOICES.has(name.toLowerCase())).toBe(true);
+    },
+  );
+
+  it("uses distinct titles within the title limit", () => {
+    expect(new Set(LOCAL_STARTER_PATTERNS.map(({ title }) => title)).size).toBe(
+      LOCAL_STARTER_PATTERNS.length,
+    );
+    for (const { title } of LOCAL_STARTER_PATTERNS) expect(title.length).toBeLessThanOrEqual(60);
+  });
 });
 
 describe("SEED_PATTERNS", () => {
